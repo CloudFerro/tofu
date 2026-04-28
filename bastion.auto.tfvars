@@ -1,0 +1,13 @@
+bastion_region            = null
+bastion_count             = 1
+bastion_name_prefix       = "bastion"
+bastion_network_id        = "UUID_OF_TENANT_NETWORK"
+bastion_image_name        = "Ubuntu 22.04 LTS"
+bastion_flavor_name       = "eo2a.medium"
+bastion_key_pair          = "my-key"
+bastion_availability_zone = null
+bastion_metadata          = {}
+bastion_user_data         = null
+bastion_config_drive      = false
+bastion_allowed_tcp_ports = [22, 80, 443]
+bastion_attach_fip        = false

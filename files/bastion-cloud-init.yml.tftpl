@@ -1,0 +1,457 @@
+#cloud-config
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - ca-certificates
+  - acl
+  - curl
+  - jq
+  - openssl
+  - tar
+
+write_files:
+  - path: /opt/guacamole/docker-compose.yml
+    permissions: '0644'
+    owner: root:root
+    content: |
+      services:
+        postgres:
+          image: postgres:15
+          container_name: guacamole-postgres
+          restart: unless-stopped
+          env_file:
+            - /opt/guacamole/.env
+          environment:
+            POSTGRES_DB: guacamole_db
+            POSTGRES_USER: $${POSTGRES_USER}
+            POSTGRES_PASSWORD: $${POSTGRES_PASSWORD}
+          volumes:
+            - /opt/guacamole/postgres:/var/lib/postgresql/data
+            - /opt/guacamole/db-init:/docker-entrypoint-initdb.d:ro
+          healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d guacamole_db"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+        guacd:
+          image: guacamole/guacd:1.6.0
+          container_name: guacamole-guacd
+          restart: unless-stopped
+          volumes:
+            - /opt/guacamole/recordings:/var/lib/guacamole/recordings:rw
+
+        guacamole:
+          image: guacamole/guacamole:1.6.0
+          container_name: guacamole-web
+          restart: unless-stopped
+          depends_on:
+            postgres:
+              condition: service_healthy
+            guacd:
+              condition: service_started
+          environment:
+            GUACAMOLE_HOME: /etc/guacamole
+            GUACD_HOSTNAME: guacd
+            REMOTE_IP_VALVE_ENABLED: "true"
+            REMOTE_IP_VALVE_REMOTE_IP_HEADER: X-Forwarded-For
+            REMOTE_IP_VALVE_PROTOCOL_HEADER: X-Forwarded-Proto
+          ports:
+            - "127.0.0.1:8080:8080"
+          volumes:
+            - /opt/guacamole/guac-home:/etc/guacamole:ro
+            - /opt/guacamole/recordings:/var/lib/guacamole/recordings:ro
+
+        nginx:
+          image: nginx:1.27-alpine
+          container_name: guacamole-nginx
+          restart: unless-stopped
+          depends_on:
+            guacamole:
+              condition: service_started
+          ports:
+            - "80:80"
+            - "443:443"
+          volumes:
+            - /opt/guacamole/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - /opt/guacamole/certs:/etc/nginx/certs:ro
+
+  - path: /opt/guacamole/nginx/nginx.conf
+    permissions: '0644'
+    owner: root:root
+    content: |
+      events {}
+
+      http {
+        server {
+          listen 80;
+          server_name _;
+          return 301 https://$host$request_uri;
+        }
+
+        server {
+          listen 443 ssl;
+          server_name _;
+
+          ssl_certificate /etc/nginx/certs/guacamole.crt;
+          ssl_certificate_key /etc/nginx/certs/guacamole.key;
+          ssl_session_cache shared:SSL:10m;
+          ssl_session_timeout 10m;
+          keepalive_timeout 75s;
+          send_timeout 86400s;
+
+          location = / {
+            return 302 /guacamole/;
+          }
+
+          location /guacamole/websocket-tunnel {
+              return 404;
+          }
+
+          location /guacamole/ {
+            proxy_pass http://guacamole:8080/guacamole/;
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_http_version 1.1;
+            proxy_socket_keepalive on;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 86400s;
+            proxy_send_timeout 86400s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port 443;
+            proxy_set_header X-Forwarded-Proto https;
+          }
+        }
+      }
+
+  - path: /opt/guacamole/seed/users.json
+    permissions: '0600'
+    owner: root:root
+    content: |
+      ${guacamole_users_json}
+
+  - path: /opt/guacamole/seed/connections.json
+    permissions: '0644'
+    owner: root:root
+    content: |
+      ${guacamole_connections_json}
+
+  - path: /opt/guacamole/bootstrap-guacamole.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      install_dir=/opt/guacamole
+      env_file="$install_dir/.env"
+      cert_dir="$install_dir/certs"
+      init_dir="$install_dir/db-init"
+      guac_home="$install_dir/guac-home"
+      guac_properties="$guac_home/guacamole.properties"
+      extensions_dir="$guac_home/extensions"
+      lib_dir="$guac_home/lib"
+      recordings_dir="$install_dir/recordings"
+      guac_version="1.6.0"
+      postgres_jdbc_version="42.7.10"
+
+      mkdir -p "$install_dir/postgres" "$cert_dir" "$init_dir" "$extensions_dir" "$lib_dir" "$recordings_dir"
+      chown -R 1000:1000 "$guac_home"
+      find "$guac_home" -type d -exec chmod 0755 {} \;
+      find "$guac_home" -type f -exec chmod 0644 {} \;
+      chmod 2750 "$recordings_dir"
+      chown 1000:1001 "$recordings_dir"
+
+      if command -v setfacl >/dev/null 2>&1; then
+        setfacl -bn "$recordings_dir"
+        setfacl -m u:1000:rwx,u:1001:rx,g:1001:rx "$recordings_dir"
+        setfacl -d -m u:1000:rwx,u:1001:rx,g:1001:rx "$recordings_dir"
+      fi
+
+      install_extension_archive() {
+        local extension_name="$1"
+        local jar_name="$2"
+        local archive="/tmp/$${extension_name}.tar.gz"
+        local extract_dir
+
+        if [[ -f "$extensions_dir/$jar_name" ]]; then
+          return
+        fi
+
+        extract_dir="$(mktemp -d)"
+        curl -fsSL "https://downloads.apache.org/guacamole/$${guac_version}/binary/$${extension_name}-$${guac_version}.tar.gz" -o "$archive"
+        tar -xzf "$archive" -C "$extract_dir"
+        find "$extract_dir" -name "$jar_name" -type f -exec cp {} "$extensions_dir/" \;
+        rm -rf "$extract_dir" "$archive"
+      }
+
+      install_postgres_driver() {
+        local target="$lib_dir/postgresql-$${postgres_jdbc_version}.jar"
+
+        if [[ -f "$target" ]]; then
+          return
+        fi
+
+        curl -fsSL "https://jdbc.postgresql.org/download/postgresql-$${postgres_jdbc_version}.jar" -o "$target"
+      }
+
+      install_docker() {
+        local arch
+        local codename
+
+        if command -v docker >/dev/null 2>&1; then
+          return
+        fi
+
+        curl -fsSL https://get.docker.com -o /tmp/get-docker.sh && sh /tmp/get-docker.sh || true
+
+        if command -v docker >/dev/null 2>&1; then
+          return
+        fi
+
+        arch="$(dpkg --print-architecture)"
+        codename="$(. /etc/os-release && echo "$${UBUNTU_CODENAME:-$VERSION_CODENAME}")"
+
+        apt-get update
+        apt-get install -y ca-certificates curl
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        chmod a+r /etc/apt/keyrings/docker.asc
+        printf 'Types: deb\nURIs: https://download.docker.com/linux/ubuntu\nSuites: %s\nComponents: stable\nArchitectures: %s\nSigned-By: /etc/apt/keyrings/docker.asc\n' "$codename" "$arch" > /etc/apt/sources.list.d/docker.sources
+        apt-get update
+        apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      }
+
+      install_docker
+
+      if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker installation failed" >&2
+        exit 1
+      fi
+
+      systemctl enable --now docker
+
+      if [[ ! -f "$env_file" ]]; then
+        postgres_password="$(openssl rand -base64 24 | tr -d '\n')"
+        printf 'POSTGRES_USER=guacamole\nPOSTGRES_PASSWORD=%s\n' "$postgres_password" > "$env_file"
+        chmod 0600 "$env_file"
+      fi
+
+      source "$env_file"
+      printf 'postgresql-hostname: postgres\npostgresql-database: guacamole_db\npostgresql-username: %s\npostgresql-password: %s\nrecording-search-path: /var/lib/guacamole/recordings\n' "$POSTGRES_USER" "$POSTGRES_PASSWORD" > "$guac_properties"
+      chown -R 1000:1000 "$guac_home"
+      find "$guac_home" -type d -exec chmod 0755 {} \;
+      find "$guac_home" -type f -exec chmod 0644 {} \;
+
+      install_extension_archive guacamole-history-recording-storage "guacamole-history-recording-storage-$${guac_version}.jar"
+      install_extension_archive guacamole-auth-jdbc "guacamole-auth-jdbc-postgresql-$${guac_version}.jar"
+      install_postgres_driver
+
+      if [[ ! -s "$init_dir/001-initdb.sql" ]]; then
+        docker run --rm guacamole/guacamole:$${guac_version} /opt/guacamole/bin/initdb.sh --postgresql > "$init_dir/001-initdb.sql"
+      fi
+
+      if [[ ! -f "$cert_dir/guacamole.key" || ! -f "$cert_dir/guacamole.crt" ]]; then
+        openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+          -keyout "$cert_dir/guacamole.key" \
+          -out "$cert_dir/guacamole.crt" \
+          -subj "/CN=$(hostname -f 2>/dev/null || hostname)"
+      fi
+
+      docker compose \
+        --env-file "$env_file" \
+        -f "$install_dir/docker-compose.yml" \
+        up -d
+
+  - path: /opt/guacamole/enable-totp.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      install_dir=/opt/guacamole
+      extensions_dir="$install_dir/guac-home/extensions"
+      guac_version="1.6.0"
+      extension_name="guacamole-auth-totp"
+      jar_name="$${extension_name}-$${guac_version}.jar"
+      archive="/tmp/$${extension_name}.tar.gz"
+      extract_dir="$(mktemp -d)"
+
+      if [[ ! -f "$extensions_dir/$jar_name" ]]; then
+        curl -fsSL "https://downloads.apache.org/guacamole/$${guac_version}/binary/$${extension_name}-$${guac_version}.tar.gz" -o "$archive"
+        tar -xzf "$archive" -C "$extract_dir"
+        find "$extract_dir" -name "$jar_name" -type f -exec cp {} "$extensions_dir/" \;
+        chown 1000:1000 "$extensions_dir/$jar_name"
+        chmod 0644 "$extensions_dir/$jar_name"
+        rm -rf "$extract_dir" "$archive"
+      fi
+
+      docker restart guacamole-web >/dev/null
+
+  - path: /opt/guacamole/seed-guacamole.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      install_dir=/opt/guacamole
+      seed_dir="$install_dir/seed"
+      users_seed="$seed_dir/users.json"
+      connections_seed="$seed_dir/connections.json"
+      guac_base="http://127.0.0.1:8080/guacamole"
+
+      users_count="$(jq 'length' "$users_seed")"
+      connections_count="$(jq 'length' "$connections_seed")"
+      if [[ "$users_count" -eq 0 && "$connections_count" -eq 0 ]]; then
+        exit 0
+      fi
+
+      wait_for_guacamole() {
+        local attempt
+        for attempt in $(seq 1 60); do
+          if curl -fsS "$guac_base/api/languages" >/dev/null 2>&1; then
+            return 0
+          fi
+          sleep 5
+        done
+
+        echo "Guacamole API did not become ready in time" >&2
+        return 1
+      }
+
+      api_login() {
+        curl -fsS -X POST \
+          -H 'Content-Type: application/x-www-form-urlencoded' \
+          --data-urlencode 'username=guacadmin' \
+          --data-urlencode 'password=guacadmin' \
+          "$guac_base/api/tokens"
+      }
+
+      user_urlencode() {
+        jq -rn --arg value "$1" '$value|@uri'
+      }
+
+      user_exists() {
+        local username="$1"
+        curl -fsS "$guac_base/api/session/data/$data_source/users/$(user_urlencode "$username")?token=$auth_token" >/dev/null 2>&1
+      }
+
+      ensure_user() {
+        local user_json="$1"
+        local username
+        local payload
+
+        username="$(jq -r '.username' <<<"$user_json")"
+        if user_exists "$username"; then
+          return
+        fi
+
+        payload="$(jq -c '{username, password, disabled: (.disabled // false), expired: (.expired // false), attributes: (.attributes // {})}' <<<"$user_json")"
+        curl -fsS -X POST \
+          -H 'Content-Type: application/json' \
+          -d "$payload" \
+          "$guac_base/api/session/data/$data_source/users?token=$auth_token" >/dev/null
+      }
+
+      find_connection_id() {
+        local name="$1"
+        local parent_identifier="$2"
+
+        curl -fsS "$guac_base/api/session/data/$data_source/connections?token=$auth_token" \
+          | jq -r --arg name "$name" --arg parent_identifier "$parent_identifier" '
+              to_entries[]?
+              | select(.value.name == $name and ((.value.parentIdentifier // "ROOT") == $parent_identifier))
+              | .key
+            ' \
+          | head -n 1
+      }
+
+      ensure_connection() {
+        local connection_json="$1"
+        local name
+        local parent_identifier
+        local payload
+        local connection_id
+
+        name="$(jq -r '.name' <<<"$connection_json")"
+        parent_identifier="$(jq -r '.parent_identifier // "ROOT"' <<<"$connection_json")"
+        connection_id="$(find_connection_id "$name" "$parent_identifier")"
+
+        if [[ -n "$connection_id" ]]; then
+          printf '%s\n' "$connection_id"
+          return
+        fi
+
+        payload="$(jq -c '{name, protocol, parentIdentifier: (.parent_identifier // "ROOT"), parameters: (.parameters // {}), attributes: (.attributes // {})}' <<<"$connection_json")"
+        connection_id="$(curl -fsS -X POST \
+          -H 'Content-Type: application/json' \
+          -d "$payload" \
+          "$guac_base/api/session/data/$data_source/connections?token=$auth_token" | jq -r '.identifier')"
+
+        printf '%s\n' "$connection_id"
+      }
+
+      user_has_read_permission() {
+        local username="$1"
+        local connection_id="$2"
+
+        curl -fsS "$guac_base/api/session/data/$data_source/users/$(user_urlencode "$username")/permissions?token=$auth_token" \
+          | jq -e --arg connection_id "$connection_id" '.connectionPermissions[$connection_id] // [] | index("READ") != null' >/dev/null
+      }
+
+      grant_connection_read() {
+        local username="$1"
+        local connection_id="$2"
+        local payload
+
+        if ! user_exists "$username"; then
+          echo "Skipping permission grant for missing Guacamole user: $username" >&2
+          return
+        fi
+
+        if user_has_read_permission "$username" "$connection_id"; then
+          return
+        fi
+
+        payload="$(jq -nc --arg connection_id "$connection_id" '[{"op":"add","path":("/connectionPermissions/" + $connection_id),"value":"READ"}]')"
+        curl -fsS -X PATCH \
+          -H 'Content-Type: application/json' \
+          -d "$payload" \
+          "$guac_base/api/session/data/$data_source/users/$(user_urlencode "$username")/permissions?token=$auth_token" >/dev/null
+      }
+
+      wait_for_guacamole
+      login_response="$(api_login)"
+      auth_token="$(jq -r '.authToken // empty' <<<"$login_response")"
+      data_source="$(jq -r '.dataSource // .availableDataSources[0] // empty' <<<"$login_response")"
+
+      if [[ -z "$auth_token" || -z "$data_source" ]]; then
+        echo "Unable to authenticate against Guacamole API" >&2
+        exit 1
+      fi
+
+      while IFS= read -r user_json; do
+        [[ -z "$user_json" ]] && continue
+        ensure_user "$user_json"
+      done < <(jq -c '.[]' "$users_seed")
+
+      while IFS= read -r connection_json; do
+        local_connection_id="$(ensure_connection "$connection_json")"
+
+        while IFS= read -r username; do
+          [[ -z "$username" ]] && continue
+          grant_connection_read "$username" "$local_connection_id"
+        done < <(jq -r '.users[]?' <<<"$connection_json")
+      done < <(jq -c '.[]' "$connections_seed")
+
+runcmd:
+  - bash /opt/guacamole/bootstrap-guacamole.sh
+  - bash /opt/guacamole/seed-guacamole.sh
+  - bash /opt/guacamole/enable-totp.sh

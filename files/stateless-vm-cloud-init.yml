@@ -1,0 +1,8 @@
+#cloud-config
+# example cloid-init file for stateless-vm. Filename must be like var.name_prefix-cloud-init.yml, otherwise user_data value (in stateless_vm.auto.tfvars) will be used. The default value of user_data is null.
+chpasswd:
+  list: |
+    root:YOUR_ROOT_PASSWORD
+  expire: False
+
+ssh_pwauth: True
