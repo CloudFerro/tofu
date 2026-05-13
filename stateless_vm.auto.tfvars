@@ -1,10 +1,10 @@
 stateless_vm_region            = null
 stateless_vm_count             = 1
 stateless_vm_name_prefix       = "stateless-vm"
-#stateless_vm_network_id        = "UUID-OF-TENANT-NETWORK"# optional - if used without network module
+stateless_vm_network_id        = "UUID-OF-TENANT-NETWORK"
 stateless_vm_image_name        = "Ubuntu 22.04 LTS"
 stateless_vm_flavor_name       = "eo2a.medium"
-#stateless_vm_key_pair          = "my-key"
+stateless_vm_key_pair          = "my-key"
 stateless_vm_availability_zone = null
 stateless_vm_config_drive      = false
 stateless_vm_user_data         = null

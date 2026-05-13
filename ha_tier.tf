@@ -4,7 +4,7 @@ module "ha_tier" {
   region            = var.ha_tier_region
   vm_count          = var.ha_tier_count
   name_prefix       = var.ha_tier_name_prefix
-  network_id        = coalesce(var.ha_tier_network_id, module.network.network.id)
+  network_id        = var.ha_tier_network_id
   image_name        = var.ha_tier_image_name
   flavor_name       = var.ha_tier_flavor_name
   key_pair          = var.ha_tier_key_pair
@@ -22,8 +22,8 @@ module "ha_tier" {
 
   loadbalancer_name                   = var.ha_tier_loadbalancer_name
   loadbalancer_flavor_id              = var.ha_tier_loadbalancer_flavor_id
-  lb_vip_subnet_id                    = coalesce(var.ha_tier_lb_vip_subnet_id, module.network.subnets[0].id)
-  lb_member_subnet_id                 = coalesce(var.ha_tier_lb_member_subnet_id, module.network.subnets[0].id)
+  lb_vip_subnet_id                    = var.ha_tier_lb_vip_subnet_id
+  lb_member_subnet_id                 = var.ha_tier_lb_member_subnet_id
   loadbalancer_listener_protocol      = var.ha_tier_lb_listener_protocol
   loadbalancer_listener_port          = var.ha_tier_lb_listener_port
   loadbalancer_pool_protocol          = var.ha_tier_lb_pool_protocol

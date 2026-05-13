@@ -1,7 +1,7 @@
 data_servers_region                     = null
 data_servers_count                      = 2
 data_servers_name_prefix                = "data-server"
-#data_servers_network_id                 = "UUID-OF-TENANT-NETWORK"#optional if used without network module
+data_servers_network_id                 = "UUID-OF-TENANT-NETWORK"
 
 data_servers_image_name                 = "Ubuntu 22.04 LTS"
 data_servers_flavor_name                = "eo2a.medium"
@@ -30,8 +30,8 @@ data_servers_allowed_egress_cidrs = [
 
 data_servers_loadbalancer_name          = "data-servers-lb"
 data_servers_loadbalancer_flavor_id     = "UUID-OF-LOADBALANCER-FLAVOR"
-data_servers_lb_vip_subnet_id           = null
-data_servers_lb_member_subnet_id        = null
+data_servers_lb_vip_subnet_id           = "UUID-OF-TENANT-NETWORK-SUBNET"
+data_servers_lb_member_subnet_id        = "UUID-OF-TENANT-NETWORK-SUBNET"
 data_servers_lb_listener_protocol       = "TCP"
 data_servers_lb_listener_port           = 80
 data_servers_lb_pool_protocol           = "TCP"

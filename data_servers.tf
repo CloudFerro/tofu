@@ -4,7 +4,7 @@ module "data_servers" {
   region            = var.data_servers_region
   vm_count          = var.data_servers_count
   name_prefix       = var.data_servers_name_prefix
-  network_id        = coalesce(var.data_servers_network_id, module.network.network.id)
+  network_id        = var.data_servers_network_id
   image_name        = var.data_servers_image_name
   flavor_name       = var.data_servers_flavor_name
   key_pair          = var.data_servers_key_pair
@@ -25,8 +25,8 @@ module "data_servers" {
 
   loadbalancer_name                   = var.data_servers_loadbalancer_name
   loadbalancer_flavor_id              = var.data_servers_loadbalancer_flavor_id
-  lb_vip_subnet_id                    = coalesce(var.data_servers_lb_vip_subnet_id, module.network.subnets[0].id)
-  lb_member_subnet_id                 = coalesce(var.data_servers_lb_member_subnet_id, module.network.subnets[0].id)
+  lb_vip_subnet_id                    = var.data_servers_lb_vip_subnet_id
+  lb_member_subnet_id                 = var.data_servers_lb_member_subnet_id
   loadbalancer_listener_protocol      = var.data_servers_lb_listener_protocol
   loadbalancer_listener_port          = var.data_servers_lb_listener_port
   loadbalancer_pool_protocol          = var.data_servers_lb_pool_protocol

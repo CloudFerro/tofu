@@ -6,9 +6,9 @@
 module "ha_tier" {
   source = "./modules/ha_tier"
 
-  network_id          = "UUID-OF-TENANT-NETWORK" #in case if you want explicitly assign vm to some network. Not needed if network module is used before and tenant network is created
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"
@@ -22,9 +22,9 @@ module "ha_tier" {
 module "ha_tier" {
   source = "./modules/ha_tier"
 
-  network_id          = "UUID-OF-TENANT-NETWORK" #in case if you want explicitly assign vm to some network. Not needed if network module is used before and tenant network is created
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"
@@ -41,9 +41,9 @@ module "ha_tier" {
 module "ha_tier" {
   source = "./modules/ha_tier"
 
-  network_id          = "UUID-OF-TENANT-NETWORK" #in case if you want explicitly assign vm to some network. Not needed if network module is used before and tenant network is created
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"

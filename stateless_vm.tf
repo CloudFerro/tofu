@@ -4,7 +4,7 @@ module "stateless_vm" {
   region            = var.stateless_vm_region
   vm_count          = var.stateless_vm_count
   name_prefix       = var.stateless_vm_name_prefix
-  network_id        = coalesce(var.stateless_vm_network_id, module.network.network.id)
+  network_id        = var.stateless_vm_network_id
   image_name        = var.stateless_vm_image_name
   flavor_name       = var.stateless_vm_flavor_name
   key_pair          = var.stateless_vm_key_pair

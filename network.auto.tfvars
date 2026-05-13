@@ -5,7 +5,7 @@ external_network_id = "UUID-OF-EXTERNAL-NETWORK"
 
 subnets = [
   {
-    name       = "tenant-net-1-v4"
+    name       = "tenant-subnet-1-ipv4"
     cidr       = "192.168.123.0/24"
     ip_version = 4
     dns_nameservers = [ "192.168.123.10", "1.1.1.1" ]
@@ -17,7 +17,7 @@ subnets = [
     ]
   }#,
 #  {
-#    name              = "tenant-dualstack-v6"
+#    name              = "tenant-subnet-1-ipv6"
 #    cidr              = "2001:db8:1234:20::/64"
 #    ip_version        = 6
 #    dns_nameservers   = [ "2001:db8:1234:20::10" ]

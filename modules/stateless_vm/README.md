@@ -27,7 +27,7 @@ module "stateless_vm" {
   name_prefix       = "MY_VM_NAME_PREFIX"
   image_name        = "MY_IMAGE_NAME"
   flavor_name       = "MY_FLAVOR_NAME"
-  network_id        = module.network.network.id
+  network_id        = "UUID-OF-TENANT-NETWORK"
   security_group_id = "UUID-OF-SECURITY-GROUP"
   client_project    = "MY_BUSINESS_PROJECT_NAME"
 }

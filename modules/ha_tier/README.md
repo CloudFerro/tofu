@@ -28,9 +28,9 @@ Creates one or more OpenStack virtual machines and, places them in a server grou
 module "ha_tier" {
   source = "./modules/ha_tier"
 
-  network_id          = coalesce(var.ha_tier_network_id, module.network.network.id)
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"

@@ -4,7 +4,7 @@ module "simple_vm" {
   region            = var.simple_vm_region
   vm_count          = var.simple_vm_count
   name_prefix       = var.simple_vm_name_prefix
-  network_id        = coalesce(var.simple_vm_network_id, module.network.network.id)
+  network_id        = var.simple_vm_network_id
   image_name        = var.simple_vm_image_name
   flavor_name       = var.simple_vm_flavor_name
   key_pair          = var.simple_vm_key_pair

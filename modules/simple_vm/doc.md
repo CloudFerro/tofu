@@ -6,7 +6,7 @@
 module "simple_vm" {
   source = "./modules/simple_vm"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #optional
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "MY_IMAGE_NAME"
   flavor_name = "MY_FLAVOR_NAME"
 }
@@ -18,7 +18,7 @@ module "simple_vm" {
 module "simple_vm" {
   source = "./modules/simple_vm"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #optional
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "MY_IMAGE_NAME"
   flavor_name = "MY_FLAVOR_NAME"
   key_pair    = "MY_KEY_NAME"
@@ -34,7 +34,7 @@ module "simple_vm" {
 module "simple_vm" {
   source = "./modules/simple_vm"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #optional
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "MY_IMAGE_NAME"
   flavor_name = "MY_FLAVOR_NAME"
   key_pair    = "MY_KEY_NAME"

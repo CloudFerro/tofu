@@ -6,7 +6,7 @@
 module "bastion" {
   source = "./modules/bastion"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #optional
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "ubuntu-24.04"
   flavor_name = "m1.small"
 }
@@ -18,7 +18,7 @@ module "bastion" {
 module "bastion" {
   source = "./modules/bastion"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #optional
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "ubuntu-24.04"
   flavor_name = "m1.small"
   key_pair    = "my-key"
@@ -34,7 +34,7 @@ module "bastion" {
 module "bastion" {
   source = "./modules/bastion"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #optional
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "ubuntu-24.04"
   flavor_name = "m1.small"
   key_pair    = "my-key"

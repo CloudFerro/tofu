@@ -26,7 +26,7 @@ Creates one or more OpenStack virtual machines attached to a specified tenant ne
 module "simple_vm" {
   source = "./modules/simple_vm"
 
-  network_id  = "UUID-OF-TENANT-NETWORK" #in case if you want explicitly assign vm to some network. Not needed if network module is used before and tenant network is created
+  network_id  = "UUID-OF-TENANT-NETWORK"
   image_name  = "MY_IMAGE_NAME"
   flavor_name = "MY_FLAVOR_NAME"
   key_pair    = "MY_KEY_NAME"

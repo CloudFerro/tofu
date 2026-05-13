@@ -1,7 +1,7 @@
 simple_vm_region            = null
 simple_vm_count             = 1
 simple_vm_name_prefix       = "simple-vm"
-#simple_vm_network_id        = "UUID-OF-TENANT-NETWORK" #optional - if used without network module 
+simple_vm_network_id        = "UUID-OF-TENANT-NETWORK"
 simple_vm_image_name        = "Ubuntu 24.04 LTS"
 simple_vm_flavor_name       = "eo2a.medium"
 simple_vm_key_pair          = "my-key"

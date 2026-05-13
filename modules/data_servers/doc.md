@@ -6,9 +6,9 @@
 module "data_servers" {
   source = "./modules/data_servers"
 
-  network_id          = module.network.network.id
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"
@@ -32,9 +32,9 @@ This creates:
 module "data_servers" {
   source = "./modules/data_servers"
 
-  network_id          = module.network.network.id
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"
@@ -65,9 +65,9 @@ This creates:
 module "data_servers" {
   source = "./modules/data_servers"
 
-  network_id          = module.network.network.id
-  lb_vip_subnet_id    = module.network.subnets.id
-  lb_member_subnet_id = module.network.subnets.id
+  network_id          = "UUID-OF-TENANT-NETWORK"
+  lb_vip_subnet_id    = "UUID-OF-TENANT-NETWORK-SUBNET"
+  lb_member_subnet_id = "UUID-OF-TENANT-NETWORK-SUBNET"
 
   image_name          = "MY_IMAGE_NAME"
   flavor_name         = "MY_FLAVOR_NAME"
