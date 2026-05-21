@@ -51,6 +51,7 @@ module "share" {
 | `description` | `string` | `null` | Optional share description. |
 | `share_proto` | `string` | `"NFS"` | Share protocol. |
 | `size` | `number` | `20` | Share size in GB. |
+| `share_type` | `string` | `20` | Share type. |
 | `share_network_id` | `string` | `null` | Existing share network ID. |
 | `availability_zone` | `string` | `null` | Optional availability zone. |
 | `metadata` | `map(string)` | `{}` | Optional share metadata. |

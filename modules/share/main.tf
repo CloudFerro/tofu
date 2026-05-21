@@ -15,6 +15,7 @@ resource "openstack_sharedfilesystem_share_v2" "share" {
   description      = var.description
   share_proto      = var.share_proto
   size             = var.size
+  share_type       = var.share_type
   is_public        = false
   share_network_id = var.share_network_id
   availability_zone = var.availability_zone

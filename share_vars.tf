@@ -33,6 +33,12 @@ variable "share_size" {
   default     = 20
 }
 
+variable "share_type" {
+  description = "Share type, for example sfs-nvme or generic_nvme."
+  type        = string
+  default     = "sfs-nvme"
+}
+
 variable "share_network_id" {
   description = "Existing share network ID."
   type        = string

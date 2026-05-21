@@ -7,6 +7,7 @@ module "share" {
   description          = var.share_description
   share_proto          = var.share_proto
   size                 = var.share_size
+  share_type           = var.share_type
   share_network_id     = var.share_network_id
   availability_zone    = var.share_availability_zone
   metadata             = var.share_metadata

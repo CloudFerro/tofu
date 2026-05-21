@@ -5,6 +5,7 @@ output "share" {
     name             = openstack_sharedfilesystem_share_v2.share[0].name
     share_proto      = openstack_sharedfilesystem_share_v2.share[0].share_proto
     size             = openstack_sharedfilesystem_share_v2.share[0].size
+    share_type       = openstack_sharedfilesystem_share_v2.share[0].share_type
     share_network_id = openstack_sharedfilesystem_share_v2.share[0].share_network_id
     export_locations = openstack_sharedfilesystem_share_v2.share[0].export_locations
   } : null

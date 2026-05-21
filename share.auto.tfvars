@@ -4,6 +4,7 @@ share_name                 = "project-data"
 share_description          = "Project Manila share"
 share_proto                = "NFS"
 share_size                 = 20
+share_type                 = "sfs-nvme"
 share_network_id           = "UUID-OF-SHARE-NETWORK"
 share_availability_zone    = null
 share_metadata             = {}

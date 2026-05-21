@@ -43,6 +43,12 @@ variable "size" {
   }
 }
 
+variable "share_type" {
+  description = "Share type, for example sfs-nvme or generic_nvme."
+  type        = string
+  default     = "sfs-nvme"
+}
+
 variable "share_network_id" {
   description = "Existing share network ID used by the Manila share."
   type        = string
