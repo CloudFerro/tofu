@@ -25,11 +25,32 @@ Creates a non-public OpenStack Manila share using an existing share network, opt
 
 ## Usage
 
+Share type sfs-nvme (default)
+
 ```hcl
 module "share" {
   source = "./modules/share"
 
   name = "MY_SHARE_NAME"
+
+  allowed_instance_ips = [
+    "10.10.10.11",
+    "10.10.10.12"
+  ]
+
+  generate_mount_script = true
+}
+```
+
+Share type generic_nvme
+
+```hcl
+module "share" {
+  source = "./modules/share"
+
+  name = "MY_SHARE_NAME"
+  share_type = "generic_nvme"
+  #provide share_network_id only for share type "generic_nvme"
   share_network_id = "UUID-OF-SHARE-NETWORK"
 
   allowed_instance_ips = [

@@ -7,17 +7,17 @@ module "share" {
   source = "./modules/share"
 
   name             = "MY_SHARE_NAME"
-  share_network_id = "UUID-OF-SHARE-NETWORK"
 }
 ```
 
-## Share with ACL rules
+## Share generic_nvme with ACL rules
 
 ```hcl
 module "share" {
   source = "./modules/share"
 
   name              = "MY_SHARE_NAME"
+  share_type        = "generic_nvme"
   share_network_id  = "UUID-OF-SHARE-NETWORK"
   allowed_instance_ips = [
     "10.10.10.11",
